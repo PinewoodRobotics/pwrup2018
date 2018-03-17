@@ -92,6 +92,15 @@ public class Robot extends IterativeRobot {
 	public OwnedSide scale;
 	public OwnedSide farSwitch;
 
+	public double currentDistance;
+	public double currentAngle;
+	public int autonStep;
+	public double targetAngle;
+	public Boolean didSetTargetAngle = false;
+	public double targetDistance;
+	public Boolean didSetTargetDistance = false;
+	
+	public Boolean autonInitHasRun = false;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -179,6 +188,12 @@ public class Robot extends IterativeRobot {
 		nearSwitch = getOwnedSide(GameFeature.SWITCH_NEAR, gameData);
 		scale = getOwnedSide(GameFeature.SCALE, gameData);
 		farSwitch = getOwnedSide(GameFeature.SWITCH_FAR, gameData);
+		autonStep = -1;
+		leftMaster.setSelectedSensorPosition(0, 0, 0);
+		didSetTargetDistance = false;
+		didSetTargetAngle = false;
+		currentDistance = 0;
+		autonInitHasRun = true;
 	}
 
 	/**
@@ -186,179 +201,257 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousPeriodic() {
+		if(autonInitHasRun) {
+			autonInitHasRun = false;
+		}
+//			if(opTable.getRawButton(3)) {
+				autonCornerScoreSame(true);
+//			}
+			if(opTable.getRawButton(4)) {
+				autonCornerScoreSame(false);
+			}
+			if(autonStep == -1) {
+				elevateFrontDistanceInInchesTo(1);
+				gripBlock();
+				amSupposedToBeGripping = true;
+				autonStep = 0;
+			}
+			if(opTable.getRawButton(2)) {
+				autonCornerMoveOnly();
+			}	
 //		switch (m_autoSelected) {
-//			case kCustomAuto:
-//				// Put custom auto code here
-//				break;
-//			case kDefaultAuto:
-//			default:
-//				// Put default auto code here
-//				break;
-//		}
-		autonCornerMoveOnly();
+//		case kCustomAuto:
+//		// Put custom auto code here
+//		break;
+//	case kDefaultAuto:
+//	default:
+//		// Put default auto code here
+//		break;
+//}
+//if(stick.getRawButton(1)) {
+//    //STAY
+//} else if(stick.getRawButton(2)) {
+//    //MOVE
+//    autonCornerMoveOnly()
+//} else if(stick.getRawButton(3)) {
+//    //START RIGHT
+//    if nearSwitch == OwnedSide.LEFT {
+//        autonCornerScoreOppo(false)
+//    } else {
+//        autonCornerScoreSame(false)
+//    }
+//} else if(stick.getRawButton(4)) {
+//    //START LEFT
+//    if nearSwitch == OwnedSide.LEFT {
+//        autonCornerScoreSame(true)
+//    } else {
+//        autonCornerScoreOppo(true)
+//    }
+//} else if(stick.getRawButton(5)) {
+//    //START MIDDLE
+//    if(nearSwitch == OwnedSide.LEFT) {
+//        autonMiddleScoreLeft()
+//    } else {
+//        autonMiddleScoreRight()
+//    }
+//}
+//		System.out.println(leftMaster.getSelectedSensorPosition(0));
+	}
+	
+	@Override
+	public void disabledInit() {
+		autonInitHasRun = false;
 	}
 	
 	public void autonCornerScoreSame(Boolean amStartingInLeftCorner) {
-		gripBlock();
-		elevateFrontDistanceInInches(30);
 		double turnDegrees = 90;
-		double currentAngle = 0;
-		double currentDistance = 0;
 		if(amStartingInLeftCorner == false) {
 			turnDegrees = -90;
 		}
-		
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 31400) {
-			driveDistanceInInches(145);
+		if(autonStep == 0) {
+			gripBlock();
+			autonStep = 1;
+		} else if(autonStep == 1) {
+			if(finishedDrivingDistanceInInches(145)) {
+				autonStep = 2;
+			}
+		} else if(autonStep == 2) {
+			if(finishedTurningAngleInDegrees(turnDegrees)) {
+				autonStep = 3;
+			}
+		} else if(autonStep == 3) {
+			elevateFrontDistanceInInchesTo(30);
+			if(frontElevator.getSelectedSensorPosition(0) > 21840) {
+				autonStep = 4;
+			}
+		} else if(autonStep == 4) {
+			if(finishedDrivingDistanceInInches(8)) {
+				autonStep = 5;
+			}
 		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(turnDegrees);
+		else if(autonStep == 5) {
+			pushBlockForward();
+			Timer.delay(1);
+			releaseBlock();
+			autonStep = 6;
 		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) <
-				6000) {
-			driveDistanceInInches(28);
-		}
-		pushBlockForward();
-		Timer.delay(1);
-		releaseBlock();
 	}
-	
-	public void autonCornerScoreOppo(Boolean amStartingInLeftCorner) {
-		gripBlock();
-		elevateFrontDistanceInInches(30);
-		double turnDegrees = 90;
-		double currentAngle = 0;
-		double currentDistance = 0;
-		if(amStartingInLeftCorner == false) {
-			turnDegrees = -90;
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 46800) {
-			driveDistanceInInches(216);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(turnDegrees);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 39900) {
-			driveDistanceInInches(184);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(turnDegrees);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 13800) {
-			driveDistanceInInches(64);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(turnDegrees);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 2500) {
-			driveDistanceInInches(12);
-		}
-		pushBlockForward();
-		Timer.delay(1);
-		releaseBlock();
-	}
-	
-	public void autonMiddleScoreRight() {
-		gripBlock();
-		elevateFrontDistanceInInches(30);
-		double currentAngle = 0;
-		double currentDistance = 0;
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
-			driveDistanceInInches(50);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(90);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 8600) {
-			driveDistanceInInches(40);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(-90);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9560) {
-			driveDistanceInInches(44);
-		}
-		pushBlockForward();
-		Timer.delay(1);
-		releaseBlock();
-	}
-	
-	public void autonMiddleScoreLeft() {
-		gripBlock();
-		elevateFrontDistanceInInches(30);
-		double currentAngle = 0;
-		double currentDistance = 0;
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
-			driveDistanceInInches(50);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(-90);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 11200) {
-			driveDistanceInInches(52);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(90);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9900) {
-			driveDistanceInInches(46);
-		}
-		pushBlockForward();
-		Timer.delay(1);
-		releaseBlock();
-	}
+//	
+//	public void autonCornerScoreOppo(Boolean amStartingInLeftCorner) {
+//		gripBlock();
+//		elevateFrontDistanceInInches(30);
+//		double turnDegrees = 90;
+//		double currentAngle = 0;
+//		double currentDistance = 0;
+//		if(amStartingInLeftCorner == false) {
+//			turnDegrees = -90;
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 46800) {
+//			driveDistanceInInches(216);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(turnDegrees);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 39900) {
+//			driveDistanceInInches(184);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(turnDegrees);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 13800) {
+//			driveDistanceInInches(64);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(turnDegrees);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 2500) {
+//			driveDistanceInInches(12);
+//		}
+//		pushBlockForward();
+//		Timer.delay(1);
+//		releaseBlock();
+//	}
+//	
+//	public void autonMiddleScoreRight() {
+//		gripBlock();
+//		elevateFrontDistanceInInches(30);
+//		double currentAngle = 0;
+//		double currentDistance = 0;
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
+//			driveDistanceInInches(50);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(90);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 8600) {
+//			driveDistanceInInches(40);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(-90);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9560) {
+//			driveDistanceInInches(44);
+//		}
+//		pushBlockForward();
+//		Timer.delay(1);
+//		releaseBlock();
+//	}
+//	
+//	public void autonMiddleScoreLeft() {
+//		gripBlock();
+//		elevateFrontDistanceInInches(30);
+//		double currentAngle = 0;
+//		double currentDistance = 0;
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
+//			driveDistanceInInches(50);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(-90);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 11200) {
+//			driveDistanceInInches(52);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(90);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9900) {
+//			driveDistanceInInches(46);
+//		}
+//		pushBlockForward();
+//		Timer.delay(1);
+//		releaseBlock();
+//	}
 	
 	public void autonCornerMoveOnly() {
-		double currentDistance = 0;
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
-			System.out.println(leftMaster.getSelectedSensorPosition(0));
-			driveDistanceInInches(95);
+		if(autonStep == 0) {
+			if(finishedDrivingDistanceInInches(95)) {
+				autonStep = 1;
+			}
+		} else if(autonStep == 1) {
+			System.out.println("Here");
+			System.out.println(ahrs.getYaw());
+			if(finishedTurningAngleInDegrees(90)) {
+				autonStep = 2;
+				System.out.println("I Turned!");
+			}
 		}
 	}
 	
 	public void autonMiddleMoveOnly() {
-		double currentAngle = 0;
-		double currentDistance = 0;
 		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 7380) {
-			driveDistanceInInches(50);
-		}
 		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(-90);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 11200) {
-			driveDistanceInInches(52);
-		}
-		currentAngle = ahrs.getYaw();
-		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-			turnAngleInDegrees(90);
-		}
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9900) {
-			driveDistanceInInches(46);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 7380) {
+//			driveDistanceInInches(50);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(-90);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 11200) {
+//			driveDistanceInInches(52);
+//		}
+//		currentAngle = ahrs.getYaw();
+//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
+//			turnAngleInDegrees(90);
+//		}
+//		currentDistance = leftMaster.getSelectedSensorPosition(0);
+//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9900) {
+//			driveDistanceInInches(46);
+//		}
+		if(autonStep == 0) {
+			if(Math.abs(leftMaster.getSelectedSensorPosition(0)/76.336) - 50 < 0) {
+				driveCalculate(0.2, 0.5, 0);
+			} else {
+				driveCalculate(0, 0, 0);
+				autonStep = 1;
+			}
+		} else if(autonStep == 1) {
+			leftMaster.setSelectedSensorPosition(0, 0, 0);
+			autonStep = 2;
+		} else if(autonStep == 2) {
+			if(finishedTurningAngleInDegrees(90)) {
+				autonStep = 3;
+			}
+		} else if(autonStep == 3) {
+			
 		}
 	}
 	
@@ -423,6 +516,12 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		
+		if(opTable.getRawButton(7)) {
+			amInClimbMode = false;
+		} else {
+			amInClimbMode = true;
+		}
+		
 		double throttle = stick.getThrottle();
 		double forward = -stick.getY();
 		double twist = stick.getZ();
@@ -437,19 +536,19 @@ public class Robot extends IterativeRobot {
 			forward = 0;
 		}
 		
-		twist = twist/3;
+		twist = twist * 0.75;
 		
 		driveCalculate(throttle, forward, twist);
-		
-		System.out.println(leftMaster.getSelectedSensorPosition(0));
-		System.out.println(rightMaster.getSelectedSensorPosition(0));
-		
-		if (stick.getRawButtonPressed(7) || opTable.getRawButton(6) == false) {
-			toggleClimbMode(true);
-		} else if(stick.getRawButtonPressed(8) || opTable.getRawButton(6)) {
-			toggleClimbMode(false);
-		}
-		
+//		
+//		System.out.println(leftMaster.getSelectedSensorPosition(0));
+//		System.out.println(rightMaster.getSelectedSensorPosition(0));
+//		
+//		if (stick.getRawButtonPressed(7) || opTable.getRawButton(6) == false) {
+//			toggleClimbMode(true);
+//		} else if(stick.getRawButtonPressed(8) || opTable.getRawButton(6)) {
+//			toggleClimbMode(false);
+//		}
+//		
 //		if(Math.abs(leftMaster.getSelectedSensorVelocity(0)) > Math.abs(maxLeftV)) {
 //			maxLeftV = leftMaster.getSelectedSensorVelocity(0);
 //		}
@@ -534,31 +633,54 @@ public class Robot extends IterativeRobot {
 		}
 	}
 	
-	public void driveDistanceInInches(double distance) {
-		double scaledTargetDistance = distance * 76.4;
-//		leftMaster.set(ControlMode.Position, scaledTargetDistance);
-//		rightMaster.set(ControlMode.Position, -scaledTargetDistance);
-		while(leftMaster.getSelectedSensorPosition(0) < scaledTargetDistance - 1833) {
-			driveCalculate(0.2, 0.5, 0);
+	public Boolean finishedDrivingDistanceInInches(double distance) {
+		currentDistance = leftMaster.getSelectedSensorPosition(0);
+		if(!didSetTargetDistance) {
+			targetDistance = currentDistance + (distance * 76.336);
+			didSetTargetDistance = true;
 		}
-		while(leftMaster.getSelectedSensorPosition(0) < scaledTargetDistance) {
-			driveCalculate(0.1, 0.1, 0);
+		System.out.println("CD:" + currentDistance);
+		System.out.println("TD" + targetDistance);
+		if(targetDistance - Math.abs(currentDistance) < 0) {
+			driveCalculate(0, 0, 0);
+			leftMaster.setSelectedSensorPosition(0, 0, 0);
+			didSetTargetDistance = false;
+			return true;
+		} else {
+			driveCalculate(0.2, 0.5, 0);
+			return false;
 		}
 	}
 	
 	//clockwise is positive, counterclockwise is negative
-	public void turnAngleInDegrees(double angle) {
-		double currentAngle = ahrs.getYaw();
-		double targetAngle = ((currentAngle + angle)%360) - 180;
-		double turnScale = 0;
-		if((targetAngle - currentAngle) > 0) {
-			turnScale = (0.125 + (Math.abs(targetAngle - currentAngle)/720));
-		} else if((targetAngle - currentAngle) < 0) {
-			turnScale = -(0.125 + (Math.abs(targetAngle - currentAngle)/720));;
+	public Boolean finishedTurningAngleInDegrees(double angle) {
+		currentAngle = ahrs.getYaw();
+		if(!didSetTargetAngle) {
+			targetAngle = ((currentAngle + angle)%180);
+			didSetTargetAngle = true;
 		}
-		while(Math.abs(targetAngle - currentAngle) > 0.1) {
-			currentAngle = ahrs.getYaw();
+		System.out.println("CA" + currentAngle);
+		System.out.println("TA" + targetAngle);
+		double turnScale = 0;
+		if((angle) > 0) {
+			if(Math.abs(targetAngle - currentAngle) < 10) {
+				turnScale = (0.1 + (Math.abs(targetAngle - currentAngle)/720));
+			}
+			turnScale = 0.35;
+		} else if((angle) < 0) {
+			if(Math.abs(targetAngle - currentAngle) < 10) {
+				turnScale = -(0.1 + (Math.abs(targetAngle - currentAngle)/720));
+			}
+			turnScale = -0.35;
+		}
+		if(Math.abs(targetAngle - currentAngle) < 1) {
+			driveCalculate(0, 0, 0);
+			leftMaster.setSelectedSensorPosition(0, 0, 0);
+			didSetTargetAngle = false;
+			return true;
+		} else {
 			driveCalculate(1, 0, turnScale);
+			return false;
 		}
 	}
 	
@@ -604,8 +726,8 @@ public class Robot extends IterativeRobot {
 			double newHeight = currentHeight + 728;
 			double backHeight;
 			backHeight = newHeight;
-			if (backHeight > 25400) {
-				backHeight = 25400;
+			if (backHeight > 21760) {
+				backHeight = 21760;
 			}
 			backElevator.set(ControlMode.Position, backHeight);
 		} else {
@@ -620,9 +742,6 @@ public class Robot extends IterativeRobot {
 					backHeight = 25400;
 				}
 			} else {
-				if (newHeight < 91) {
-					newHeight = 91;
-				}
 				frontHeight = newHeight;			
 				backHeight = 0;
 			}
@@ -656,8 +775,8 @@ public class Robot extends IterativeRobot {
 					backHeight = 25400;
 				}
 			} else {
-				if (newHeight < 364) {
-					newHeight = 364;
+				if (newHeight < 728) {
+					newHeight = 728;
 				}
 				frontHeight = newHeight;			
 				backHeight = 0;
@@ -722,8 +841,8 @@ public class Robot extends IterativeRobot {
 			release.set(true);
 			frontHeightWhenReset = frontElevator.getSelectedSensorPosition(0);
 			backHeightWhenReset = backElevator.getSelectedSensorPosition(0);
-			frontElevator.set(ControlMode.Position, 0);
-			backElevator.set(ControlMode.Position, 0);
+			frontElevator.set(ControlMode.Position, 91);
+			backElevator.set(ControlMode.Position, 728);
 			forwardPush.set(false);
 			backwardPull.set(true);
 			amInClimbMode = true;
@@ -743,7 +862,7 @@ public class Robot extends IterativeRobot {
 		
 	}
 	
-	public void elevateFrontDistanceInInches(double height) {
+	public void elevateFrontDistanceInInchesTo(double height) {
 		frontElevator.config_kP(0, 1.5, 0);
 		double newHeight = height * 728;
 		if(newHeight > 28242) { 
