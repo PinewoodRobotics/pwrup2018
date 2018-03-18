@@ -204,21 +204,6 @@ public class Robot extends IterativeRobot {
 		if(autonInitHasRun) {
 			autonInitHasRun = false;
 		}
-//			if(opTable.getRawButton(3)) {
-				autonCornerScoreSame(true);
-//			}
-			if(opTable.getRawButton(4)) {
-				autonCornerScoreSame(false);
-			}
-			if(autonStep == -1) {
-				elevateFrontDistanceInInchesTo(1);
-				gripBlock();
-				amSupposedToBeGripping = true;
-				autonStep = 0;
-			}
-			if(opTable.getRawButton(2)) {
-				autonCornerMoveOnly();
-			}	
 //		switch (m_autoSelected) {
 //		case kCustomAuto:
 //		// Put custom auto code here
@@ -227,35 +212,41 @@ public class Robot extends IterativeRobot {
 //	default:
 //		// Put default auto code here
 //		break;
-//}
-//if(stick.getRawButton(1)) {
-//    //STAY
-//} else if(stick.getRawButton(2)) {
-//    //MOVE
-//    autonCornerMoveOnly()
-//} else if(stick.getRawButton(3)) {
-//    //START RIGHT
-//    if nearSwitch == OwnedSide.LEFT {
-//        autonCornerScoreOppo(false)
-//    } else {
-//        autonCornerScoreSame(false)
-//    }
-//} else if(stick.getRawButton(4)) {
-//    //START LEFT
-//    if nearSwitch == OwnedSide.LEFT {
-//        autonCornerScoreSame(true)
-//    } else {
-//        autonCornerScoreOppo(true)
-//    }
-//} else if(stick.getRawButton(5)) {
-//    //START MIDDLE
-//    if(nearSwitch == OwnedSide.LEFT) {
-//        autonMiddleScoreLeft()
-//    } else {
-//        autonMiddleScoreRight()
-//    }
-//}
-//		System.out.println(leftMaster.getSelectedSensorPosition(0));
+	if(autonStep == -1) {
+		if(finishedElevatingFrontDistanceInInchesTo(1)) {
+			gripBlock();
+			amSupposedToBeGripping = true;
+			autonStep = 0;
+		}
+	}
+	if(opTable.getRawButton(1)) {
+	    //STAY
+	} else if(opTable.getRawButton(2)) {
+	    //MOVE
+	    autonCornerMoveOnly();
+	} else if(opTable.getRawButton(3)) {
+	    //START RIGHT
+	    if(nearSwitch == OwnedSide.LEFT) {
+	    	autonCornerScoreSame(true);
+	    } else {
+	        autonCornerScoreOppo(true);
+	    }
+	} else if(opTable.getRawButton(4)) {
+	    //START LEFT
+	    if(nearSwitch == OwnedSide.LEFT) {
+	    	autonCornerScoreOppo(false);
+	    } else {
+	        autonCornerScoreSame(false);
+	    }
+	} else if(opTable.getRawButton(5)) {
+	    //START MIDDLE
+	    if(nearSwitch == OwnedSide.LEFT) {
+	        autonMiddleScoreLeft();
+	    } else {
+	        autonMiddleScoreRight();
+	    }
+	}
+		System.out.println(DriverStation.getInstance().getGameSpecificMessage());
 	}
 	
 	@Override
@@ -263,156 +254,150 @@ public class Robot extends IterativeRobot {
 		autonInitHasRun = false;
 	}
 	
-	public void autonCornerScoreSame(Boolean amStartingInLeftCorner) {
-		double turnDegrees = 90;
-		if(amStartingInLeftCorner == false) {
-			turnDegrees = -90;
-		}
-		if(autonStep == 0) {
-			gripBlock();
-			autonStep = 1;
-		} else if(autonStep == 1) {
-			if(finishedDrivingDistanceInInches(145)) {
-				autonStep = 2;
-			}
-		} else if(autonStep == 2) {
-			if(finishedTurningAngleInDegrees(turnDegrees)) {
-				autonStep = 3;
-			}
-		} else if(autonStep == 3) {
-			elevateFrontDistanceInInchesTo(30);
-			if(frontElevator.getSelectedSensorPosition(0) > 21840) {
-				autonStep = 4;
-			}
-		} else if(autonStep == 4) {
-			if(finishedDrivingDistanceInInches(8)) {
-				autonStep = 5;
-			}
-		}
-		else if(autonStep == 5) {
-			pushBlockForward();
-			Timer.delay(1);
-			releaseBlock();
-			autonStep = 6;
-		}
-	}
-//	
-//	public void autonCornerScoreOppo(Boolean amStartingInLeftCorner) {
-//		gripBlock();
-//		elevateFrontDistanceInInches(30);
-//		double turnDegrees = 90;
-//		double currentAngle = 0;
-//		double currentDistance = 0;
-//		if(amStartingInLeftCorner == false) {
-//			turnDegrees = -90;
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 46800) {
-//			driveDistanceInInches(216);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(turnDegrees);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 39900) {
-//			driveDistanceInInches(184);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(turnDegrees);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 13800) {
-//			driveDistanceInInches(64);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(turnDegrees);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 2500) {
-//			driveDistanceInInches(12);
-//		}
-//		pushBlockForward();
-//		Timer.delay(1);
-//		releaseBlock();
-//	}
-//	
-//	public void autonMiddleScoreRight() {
-//		gripBlock();
-//		elevateFrontDistanceInInches(30);
-//		double currentAngle = 0;
-//		double currentDistance = 0;
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
-//			driveDistanceInInches(50);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(90);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 8600) {
-//			driveDistanceInInches(40);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(-90);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9560) {
-//			driveDistanceInInches(44);
-//		}
-//		pushBlockForward();
-//		Timer.delay(1);
-//		releaseBlock();
-//	}
-//	
-//	public void autonMiddleScoreLeft() {
-//		gripBlock();
-//		elevateFrontDistanceInInches(30);
-//		double currentAngle = 0;
-//		double currentDistance = 0;
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 10800) {
-//			driveDistanceInInches(50);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(-90);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 11200) {
-//			driveDistanceInInches(52);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(90);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9900) {
-//			driveDistanceInInches(46);
-//		}
-//		pushBlockForward();
-//		Timer.delay(1);
-//		releaseBlock();
-//	}
-	
-	public void autonCornerMoveOnly() {
-		if(autonStep == 0) {
-			if(finishedDrivingDistanceInInches(95)) {
-				autonStep = 1;
-			}
-		} else if(autonStep == 1) {
-			System.out.println("Here");
-			System.out.println(ahrs.getYaw());
-			if(finishedTurningAngleInDegrees(90)) {
-				autonStep = 2;
-				System.out.println("I Turned!");
-			}
-		}
-	}
+	 public void autonCornerScoreSame(Boolean amStartingInLeftCorner) {
+	        double turnDegrees = 90;
+	        if(amStartingInLeftCorner == false) {
+	            turnDegrees = -90;
+	        }
+	        if(autonStep == 0) {
+	            gripBlock();
+	            autonStep = 1;
+	        } else if(autonStep == 1) {
+	            if(finishedDrivingDistanceInInches(145)) {
+	                autonStep = 2;
+	            }
+	        } else if(autonStep == 2) {
+	            if(finishedTurningAngleInDegrees(turnDegrees)) {
+	                autonStep = 3;
+	            }
+	        } else if(autonStep == 3) {
+	            if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	            	autonStep = 4;
+	            }
+	        } else if(autonStep == 4) {
+	            if(finishedDrivingDistanceInInches(8)) {
+	                autonStep = 5;
+	            }
+	        }
+	        else if(autonStep == 5) {
+	            pushBlockForward();
+	            Timer.delay(1);
+	            releaseBlock();
+	            autonStep = 6;
+	        }
+	    }
+	    //
+	        public void autonCornerScoreOppo(Boolean amStartingInLeftCorner) {
+	            double turnDegrees = 90;
+	            if(amStartingInLeftCorner == false) {
+	                turnDegrees = -90;
+	            }
+
+	            if(autonStep == 0) {
+	                if(finishedDrivingDistanceInInches(216)) {
+	                    autonStep = 1;
+	                }
+	            } else if(autonStep == 1) {
+	                if(finishedTurningAngleInDegrees(turnDegrees)) {
+	                    autonStep = 2;
+	                }
+	            } else if(autonStep == 2) {
+	                if(finishedDrivingDistanceInInches(180)) {
+	                    autonStep = 3;
+	                }
+	            } else if(autonStep == 3) {
+	                if(finishedTurningAngleInDegrees(turnDegrees)) {
+	                    autonStep = 4;
+	                }
+	            } else if(autonStep == 4) {
+	                if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	                    autonStep = 5;
+	                }
+	            } else if(autonStep == 5) {
+	            	if(finishedDrivingDistanceInInches(12)) {
+	                    autonStep = 6;
+	                }
+	            } else if(autonStep == 7) {
+	                pushBlockForward();
+	                Timer.delay(1);
+	                releaseBlock();
+	                autonStep = 8;
+	            }
+	        }
+	    
+	        public void autonMiddleScoreRight() {
+	            if(autonStep == 0) {
+	                if(finishedDrivingDistanceInInches(50)) {
+	                    autonStep = 1;
+	                }
+	            } else if(autonStep == 1) {
+	                if(finishedTurningAngleInDegrees(90)) {
+	                    autonStep = 2;
+	                }
+	            } else if(autonStep == 2) {
+	                if(finishedDrivingDistanceInInches(46)) {
+	                    autonStep = 3;
+	                }
+	            } else if(autonStep == 3) {
+	                if(finishedTurningAngleInDegrees(-90)) {
+	                    autonStep = 4;
+	                }
+	            } else if(autonStep == 4) {
+	                if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	                    autonStep = 5;
+	                }
+	            } else if(autonStep == 5) {
+	                if(finishedDrivingDistanceInInches(44)) {
+	                    autonStep = 6;
+	                }
+	            } else if(autonStep == 6) {
+	                pushBlockForward();
+	                Timer.delay(1);
+	                releaseBlock();
+	                autonStep = 7;
+	            }
+	        }
+	    
+	        public void autonMiddleScoreLeft() {
+	            if(autonStep == 0) {
+	                if(finishedDrivingDistanceInInches(50)) {
+	                    autonStep = 1;
+	                }
+	            } else if(autonStep == 1) {
+	                if(finishedTurningAngleInDegrees(-90)) {
+	                    autonStep = 2;
+	                }
+	            } else if(autonStep == 2) {
+	                if(finishedDrivingDistanceInInches(58)) {
+	                    autonStep = 3;
+	                }
+	            } else if(autonStep == 3) {
+	                if(finishedTurningAngleInDegrees(90)) {
+	                    autonStep = 4;
+	                }
+	            } else if(autonStep == 4) {
+	                if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	                    autonStep = 5;
+	                }
+	            } else if(autonStep == 5) {
+	                if(finishedDrivingDistanceInInches(46)) {
+	                    autonStep = 6;
+	                }
+	            } else if(autonStep == 6) {
+	                pushBlockForward();
+	                Timer.delay(1);
+	                releaseBlock();
+	                autonStep = 7;
+	            }
+	        }
+
+	    public void autonCornerMoveOnly() {
+	        if(autonStep == 0) {
+	            if(finishedDrivingDistanceInInches(95)) {
+	                autonStep = 1;
+	            }
+	        }
+	    }
 	
 	public void autonMiddleMoveOnly() {
 		currentDistance = leftMaster.getSelectedSensorPosition(0);
@@ -487,6 +472,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopInit() {
 		System.out.println("Back Elevator Height Testing");
+		amInClimbMode = false;
 		compressor.start();
 	}
 
@@ -516,10 +502,10 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		
-		if(opTable.getRawButton(7)) {
-			amInClimbMode = false;
+		if(opTable.getRawButton(6)) {
+			toggleClimbMode(false);
 		} else {
-			amInClimbMode = true;
+			toggleClimbMode(true);
 		}
 		
 		double throttle = stick.getThrottle();
@@ -662,18 +648,24 @@ public class Robot extends IterativeRobot {
 		System.out.println("CA" + currentAngle);
 		System.out.println("TA" + targetAngle);
 		double turnScale = 0;
+		double error = Math.abs(Math.abs(turnScale) - Math.abs(currentAngle));
 		if((angle) > 0) {
-			if(Math.abs(targetAngle - currentAngle) < 10) {
-				turnScale = (0.1 + (Math.abs(targetAngle - currentAngle)/720));
+			if(error < 25) {
+				turnScale = (0.05 + (error * 0.02));
+			} else {
+				turnScale = 0.35;
 			}
-			turnScale = 0.35;
 		} else if((angle) < 0) {
-			if(Math.abs(targetAngle - currentAngle) < 10) {
-				turnScale = -(0.1 + (Math.abs(targetAngle - currentAngle)/720));
+			if(error < 25) {
+				turnScale = -(0.05 + (error * 0.02));
+			} else {
+				turnScale = -0.35;
 			}
-			turnScale = -0.35;
 		}
-		if(Math.abs(targetAngle - currentAngle) < 1) {
+		System.out.println(error);
+		System.out.println("TD: " + turnScale);
+		System.out.println(turnScale);
+		if(Math.abs(targetAngle - currentAngle) < 2.5) {
 			driveCalculate(0, 0, 0);
 			leftMaster.setSelectedSensorPosition(0, 0, 0);
 			didSetTargetAngle = false;
@@ -681,14 +673,6 @@ public class Robot extends IterativeRobot {
 		} else {
 			driveCalculate(1, 0, turnScale);
 			return false;
-		}
-	}
-	
-	public void toggle(Boolean toBeToggled) {
-		if (toBeToggled) {
-			toBeToggled = false;
-		} else if(toBeToggled == false) {
-			toBeToggled = true;
 		}
 	}
 	
@@ -721,7 +705,7 @@ public class Robot extends IterativeRobot {
 		currentHeightIsSet = false;
 		frontElevator.config_kP(0, 1.5, 0);
 		backElevator.config_kP(0, 1.5, 0);
-		if(amInClimbMode) {
+		if(amInClimbMode == true) {
 			double currentHeight = backElevator.getSelectedSensorPosition(0);
 			double newHeight = currentHeight + 728;
 			double backHeight;
@@ -754,7 +738,7 @@ public class Robot extends IterativeRobot {
 		currentHeightIsSet = false;
 		frontElevator.config_kP(0, 1.0, 0);
 		backElevator.config_kP(0, 1.0, 0);
-		if(amInClimbMode) {
+		if(amInClimbMode == true) {
 			double currentHeight = backElevator.getSelectedSensorPosition(0);
 			double newHeight = currentHeight - 728;
 			double backHeight;
@@ -787,7 +771,7 @@ public class Robot extends IterativeRobot {
 	}
 	
 	public void keepElevatorSteady(double height) {
-		if(amInClimbMode) {
+		if(amInClimbMode == true) {
 			double newHeight = height;
 			double backHeight;
 			backHeight = newHeight;
@@ -835,22 +819,35 @@ public class Robot extends IterativeRobot {
 	}
 	
 	public void toggleClimbMode(Boolean toggleOn) {
-		if (toggleOn) {
-			compressor.stop();
-			grip.set(false);
-			release.set(true);
-			frontHeightWhenReset = frontElevator.getSelectedSensorPosition(0);
-			backHeightWhenReset = backElevator.getSelectedSensorPosition(0);
-			frontElevator.set(ControlMode.Position, 91);
-			backElevator.set(ControlMode.Position, 728);
-			forwardPush.set(false);
-			backwardPull.set(true);
-			amInClimbMode = true;
+		if(amInClimbMode == toggleOn) {
+			System.out.println("Not Doing Anything");
+			System.out.println("ToggleOn:" + toggleOn);
+			System.out.println("climbMode:" + amInClimbMode);
+			return;
 		} else {
-			compressor.start();
-			frontElevator.set(ControlMode.Position, frontHeightWhenReset);
-			backElevator.set(ControlMode.PercentOutput, backHeightWhenReset);
-			amInClimbMode = false;
+			if (toggleOn) {
+				compressor.stop();
+				grip.set(false);
+				release.set(true);
+				frontHeightWhenReset = frontElevator.getSelectedSensorPosition(0);
+				backHeightWhenReset = backElevator.getSelectedSensorPosition(0);
+				frontElevator.set(ControlMode.Position, 91);
+				backElevator.set(ControlMode.Position, 728);
+				forwardPush.set(false);
+				backwardPull.set(true);
+				amInClimbMode = true;
+				System.out.println("Toggling On");
+				System.out.println("ToggleOn:" + toggleOn);
+				System.out.println("climbMode:" + amInClimbMode);
+			} else {
+				compressor.start();
+				frontElevator.set(ControlMode.Position, frontHeightWhenReset);
+				backElevator.set(ControlMode.PercentOutput, backHeightWhenReset);
+				amInClimbMode = false;
+				System.out.println("Toggling Off");
+				System.out.println("ToggleOn:" + toggleOn);
+				System.out.println("climbMode:" + amInClimbMode);
+			}
 		}
 	}
 	
@@ -862,14 +859,20 @@ public class Robot extends IterativeRobot {
 		
 	}
 	
-	public void elevateFrontDistanceInInchesTo(double height) {
-		frontElevator.config_kP(0, 1.5, 0);
-		double newHeight = height * 728;
-		if(newHeight > 28242) { 
-			newHeight = 28242;
-		}
-		frontElevator.set(ControlMode.Position, newHeight);
-	}
+	public Boolean finishedElevatingFrontDistanceInInchesTo(double height) {
+        frontElevator.config_kP(0, 1.5, 0);
+        double newHeight = height * 728;
+        if(newHeight > 28242) {
+            newHeight = 28242;
+        }
+        if(frontElevator.getSelectedSensorPosition(0) < newHeight - 364) {
+            frontElevator.set(ControlMode.Position, newHeight);
+            return false;
+        } else {
+            frontElevator.set(ControlMode.Position, newHeight);
+            return true;
+        }
+    }
 	
 	//front elevator max is 28500
 	//back elevator max is 25400
