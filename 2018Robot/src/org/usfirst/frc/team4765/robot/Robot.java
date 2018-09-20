@@ -43,13 +43,18 @@ public class Robot extends IterativeRobot {
 	public TalonSRX rightSlave = new TalonSRX(2);
 	public TalonSRX leftMaster = new TalonSRX(8);
 	public TalonSRX leftSlave = new TalonSRX(4);
-	public Compressor compressor = new Compressor(32);
-	public Solenoid grip = new Solenoid(32, 2);
-	public Solenoid release = new Solenoid(32, 3);
-	public Solenoid forwardPush = new Solenoid(32, 0);
-	public Solenoid backwardPull = new Solenoid(32, 1);
+	//public Compressor compressor = new Compressor(32);
+	//public Solenoid grip = new Solenoid(32, 2);
+	//public Solenoid release = new Solenoid(32, 3);
+	//public Solenoid forwardPush = new Solenoid(32, 0);
+	//public Solenoid backwardPull = new Solenoid(32, 1);
 	public TalonSRX frontElevator = new TalonSRX(1);
 	public TalonSRX backElevator = new TalonSRX(9);
+	public TalonSRX bottomRoller = new TalonSRX(99);
+	public TalonSRX topRoller = new TalonSRX(98);
+	private static final double gripCurrent=0;
+	private static final double steadyCurrent=0;
+	private static final double releaseCurrent=0;
 	
 	public Joystick stick = new Joystick(0);
 	public Joystick opTable = new Joystick(1);
@@ -100,6 +105,8 @@ public class Robot extends IterativeRobot {
 	public double targetDistance;
 	public Boolean didSetTargetDistance = false;
 	
+	public int stallingMS;
+	
 	public Boolean autonInitHasRun = false;
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -107,7 +114,6 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
 		m_chooser.addObject("My Auto", kCustomAuto);
 		SmartDashboard.putData("Auto choices", m_chooser);
@@ -164,6 +170,8 @@ public class Robot extends IterativeRobot {
 		
 		leftMaster.setSelectedSensorPosition(0, 0, 0);
 		rightMaster.setSelectedSensorPosition(0, 0, 0);
+		
+		stallingMS = 0;
 	}
 
 	/**
@@ -183,7 +191,7 @@ public class Robot extends IterativeRobot {
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + m_autoSelected);
-		compressor.start();
+		//compressor.start();
 		String gameData = DriverStation.getInstance().getGameSpecificMessage();
 		nearSwitch = getOwnedSide(GameFeature.SWITCH_NEAR, gameData);
 		scale = getOwnedSide(GameFeature.SCALE, gameData);
@@ -203,6 +211,11 @@ public class Robot extends IterativeRobot {
 	public void autonomousPeriodic() {
 		if(autonInitHasRun) {
 			autonInitHasRun = false;
+		}
+		if(leftMaster.getSelectedSensorVelocity(0) * 10/76.4 < 2) {
+			stallingMS += 1;
+		} else {
+			stallingMS = 0;
 		}
 //		switch (m_autoSelected) {
 //		case kCustomAuto:
@@ -246,7 +259,6 @@ public class Robot extends IterativeRobot {
 	        autonMiddleScoreRight();
 	    }
 	}
-		System.out.println(DriverStation.getInstance().getGameSpecificMessage());
 	}
 	
 	@Override
@@ -260,26 +272,30 @@ public class Robot extends IterativeRobot {
 	            turnDegrees = -90;
 	        }
 	        if(autonStep == 0) {
+	        	stallingMS = 0;
 	            gripBlock();
 	            autonStep = 1;
 	        } else if(autonStep == 1) {
-	            if(finishedDrivingDistanceInInches(145)) {
+	            if(finishedDrivingDistanceInInches(145) || stallingMS > 2000) {
+	            	stallingMS = 0;
 	                autonStep = 2;
 	            }
 	        } else if(autonStep == 2) {
 	            if(finishedTurningAngleInDegrees(turnDegrees)) {
+	            	stallingMS = 0;
 	                autonStep = 3;
 	            }
 	        } else if(autonStep == 3) {
 	            if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	            	stallingMS = 0;
 	            	autonStep = 4;
 	            }
 	        } else if(autonStep == 4) {
-	            if(finishedDrivingDistanceInInches(8)) {
+	            if(finishedDrivingDistanceInInches(8) || stallingMS > 2000) {
+	            	stallingMS = 0;
 	                autonStep = 5;
 	            }
-	        }
-	        else if(autonStep == 5) {
+	        } else if(autonStep == 5) {
 	            pushBlockForward();
 	            Timer.delay(1);
 	            releaseBlock();
@@ -294,27 +310,33 @@ public class Robot extends IterativeRobot {
 	            }
 
 	            if(autonStep == 0) {
-	                if(finishedDrivingDistanceInInches(216)) {
+	                if(finishedDrivingDistanceInInches(216) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 1;
 	                }
 	            } else if(autonStep == 1) {
 	                if(finishedTurningAngleInDegrees(turnDegrees)) {
+	                	stallingMS = 0;
 	                    autonStep = 2;
 	                }
 	            } else if(autonStep == 2) {
-	                if(finishedDrivingDistanceInInches(180)) {
+	                if(finishedDrivingDistanceInInches(180) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 3;
 	                }
 	            } else if(autonStep == 3) {
 	                if(finishedTurningAngleInDegrees(turnDegrees)) {
+	                	stallingMS = 0;
 	                    autonStep = 4;
 	                }
 	            } else if(autonStep == 4) {
 	                if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	                	stallingMS = 0;
 	                    autonStep = 5;
 	                }
 	            } else if(autonStep == 5) {
-	            	if(finishedDrivingDistanceInInches(12)) {
+	            	if(finishedDrivingDistanceInInches(12) || stallingMS > 2000) {
+	            		stallingMS = 0;
 	                    autonStep = 6;
 	                }
 	            } else if(autonStep == 7) {
@@ -327,27 +349,33 @@ public class Robot extends IterativeRobot {
 	    
 	        public void autonMiddleScoreRight() {
 	            if(autonStep == 0) {
-	                if(finishedDrivingDistanceInInches(50)) {
+	                if(finishedDrivingDistanceInInches(50) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 1;
 	                }
 	            } else if(autonStep == 1) {
 	                if(finishedTurningAngleInDegrees(90)) {
+	                	stallingMS = 0;
 	                    autonStep = 2;
 	                }
 	            } else if(autonStep == 2) {
-	                if(finishedDrivingDistanceInInches(46)) {
+	                if(finishedDrivingDistanceInInches(46) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 3;
 	                }
 	            } else if(autonStep == 3) {
 	                if(finishedTurningAngleInDegrees(-90)) {
+	                	stallingMS = 0;
 	                    autonStep = 4;
 	                }
 	            } else if(autonStep == 4) {
 	                if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	                	stallingMS = 0;
 	                    autonStep = 5;
 	                }
 	            } else if(autonStep == 5) {
-	                if(finishedDrivingDistanceInInches(44)) {
+	                if(finishedDrivingDistanceInInches(44) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 6;
 	                }
 	            } else if(autonStep == 6) {
@@ -360,27 +388,33 @@ public class Robot extends IterativeRobot {
 	    
 	        public void autonMiddleScoreLeft() {
 	            if(autonStep == 0) {
-	                if(finishedDrivingDistanceInInches(50)) {
+	                if(finishedDrivingDistanceInInches(50) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 1;
 	                }
 	            } else if(autonStep == 1) {
 	                if(finishedTurningAngleInDegrees(-90)) {
+	                	stallingMS = 0;
 	                    autonStep = 2;
 	                }
 	            } else if(autonStep == 2) {
-	                if(finishedDrivingDistanceInInches(58)) {
+	                if(finishedDrivingDistanceInInches(60) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 3;
 	                }
 	            } else if(autonStep == 3) {
 	                if(finishedTurningAngleInDegrees(90)) {
+	                	stallingMS = 0;
 	                    autonStep = 4;
 	                }
 	            } else if(autonStep == 4) {
 	                if(finishedElevatingFrontDistanceInInchesTo(30)) {
+	                	stallingMS = 0;
 	                    autonStep = 5;
 	                }
 	            } else if(autonStep == 5) {
-	                if(finishedDrivingDistanceInInches(46)) {
+	                if(finishedDrivingDistanceInInches(48) || stallingMS > 2000) {
+	                	stallingMS = 0;
 	                    autonStep = 6;
 	                }
 	            } else if(autonStep == 6) {
@@ -398,47 +432,7 @@ public class Robot extends IterativeRobot {
 	            }
 	        }
 	    }
-	
-	public void autonMiddleMoveOnly() {
-		currentDistance = leftMaster.getSelectedSensorPosition(0);
-		currentAngle = ahrs.getYaw();
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 7380) {
-//			driveDistanceInInches(50);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(-90);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 11200) {
-//			driveDistanceInInches(52);
-//		}
-//		currentAngle = ahrs.getYaw();
-//		while(Math.abs(ahrs.getYaw() - currentAngle) < 89.9) {
-//			turnAngleInDegrees(90);
-//		}
-//		currentDistance = leftMaster.getSelectedSensorPosition(0);
-//		while(Math.abs(leftMaster.getSelectedSensorPosition(0) - currentDistance) < 9900) {
-//			driveDistanceInInches(46);
-//		}
-		if(autonStep == 0) {
-			if(Math.abs(leftMaster.getSelectedSensorPosition(0)/76.336) - 50 < 0) {
-				driveCalculate(0.2, 0.5, 0);
-			} else {
-				driveCalculate(0, 0, 0);
-				autonStep = 1;
-			}
-		} else if(autonStep == 1) {
-			leftMaster.setSelectedSensorPosition(0, 0, 0);
-			autonStep = 2;
-		} else if(autonStep == 2) {
-			if(finishedTurningAngleInDegrees(90)) {
-				autonStep = 3;
-			}
-		} else if(autonStep == 3) {
-			
-		}
-	}
+
 	
 	public OwnedSide getOwnedSide(GameFeature feature, String gsm) {
 		
@@ -471,9 +465,8 @@ public class Robot extends IterativeRobot {
 	
 	@Override
 	public void teleopInit() {
-		System.out.println("Back Elevator Height Testing");
 		amInClimbMode = false;
-		compressor.start();
+		//compressor.start();
 	}
 
 	/**
@@ -625,8 +618,6 @@ public class Robot extends IterativeRobot {
 			targetDistance = currentDistance + (distance * 76.336);
 			didSetTargetDistance = true;
 		}
-		System.out.println("CD:" + currentDistance);
-		System.out.println("TD" + targetDistance);
 		if(targetDistance - Math.abs(currentDistance) < 0) {
 			driveCalculate(0, 0, 0);
 			leftMaster.setSelectedSensorPosition(0, 0, 0);
@@ -645,8 +636,6 @@ public class Robot extends IterativeRobot {
 			targetAngle = ((currentAngle + angle)%180);
 			didSetTargetAngle = true;
 		}
-		System.out.println("CA" + currentAngle);
-		System.out.println("TA" + targetAngle);
 		double turnScale = 0;
 		double error = Math.abs(Math.abs(turnScale) - Math.abs(currentAngle));
 		if((angle) > 0) {
@@ -662,9 +651,6 @@ public class Robot extends IterativeRobot {
 				turnScale = -0.35;
 			}
 		}
-		System.out.println(error);
-		System.out.println("TD: " + turnScale);
-		System.out.println(turnScale);
 		if(Math.abs(targetAngle - currentAngle) < 2.5) {
 			driveCalculate(0, 0, 0);
 			leftMaster.setSelectedSensorPosition(0, 0, 0);
@@ -677,28 +663,34 @@ public class Robot extends IterativeRobot {
 	}
 	
 	public void gripBlock() {
-		grip.set(true);
-		release.set(false);
+		//grip.set(true);
+		//release.set(false);
+		topRoller.set(ControlMode.Current, gripCurrent);
+		bottomRoller.set(ControlMode.Current, gripCurrent);
 	}
 	
 	public void releaseBlock() {
-		release.set(true);
-		grip.set(false);
+	//	release.set(true);
+	//	grip.set(false);
+		topRoller.set(ControlMode.Current, releaseCurrent);
+		bottomRoller.set(ControlMode.Current, releaseCurrent);
 	}
 	
-	public void pushBlockForward() {
-		forwardPush.set(true);
-		backwardPull.set(false);
+	/*public void pushBlockForward() {
+		//forwardPush.set(true);
+		//backwardPull.set(false);
 	}
 	
 	public void pullBlockBackward() {
-		backwardPull.set(true);
-		forwardPush.set(false);
-	}
+		//backwardPull.set(true);
+		//forwardPush.set(false);
+	}*/
 	
 	public void keepBlockSteady() {
-		backwardPull.set(false);
-		forwardPush.set(false);
+		//backwardPull.set(false);
+		//forwardPush.set(false);
+		topRoller.set(ControlMode.Current, steadyCurrent);
+		bottomRoller.set(ControlMode.Current, steadyCurrent);
 	}
 	
 	public void elevate() {
@@ -815,7 +807,8 @@ public class Robot extends IterativeRobot {
 //		//some conversion there
 		rightMaster.set(ControlMode.Velocity, rightSpeed);
 		leftMaster.set(ControlMode.Velocity, leftSpeed);
-		
+		System.out.println(rightMaster.getSelectedSensorVelocity(0));
+		System.out.println(leftMaster.getSelectedSensorVelocity(0));
 	}
 	
 	public void toggleClimbMode(Boolean toggleOn) {
@@ -826,21 +819,21 @@ public class Robot extends IterativeRobot {
 			return;
 		} else {
 			if (toggleOn) {
-				compressor.stop();
-				grip.set(false);
-				release.set(true);
+				//compressor.stop();
+				//grip.set(false);
+				//release.set(true);
 				frontHeightWhenReset = frontElevator.getSelectedSensorPosition(0);
 				backHeightWhenReset = backElevator.getSelectedSensorPosition(0);
 				frontElevator.set(ControlMode.Position, 91);
 				backElevator.set(ControlMode.Position, 728);
-				forwardPush.set(false);
-				backwardPull.set(true);
+				//forwardPush.set(false);
+			//	backwardPull.set(true);
 				amInClimbMode = true;
 				System.out.println("Toggling On");
 				System.out.println("ToggleOn:" + toggleOn);
 				System.out.println("climbMode:" + amInClimbMode);
 			} else {
-				compressor.start();
+				//compressor.start();
 				frontElevator.set(ControlMode.Position, frontHeightWhenReset);
 				backElevator.set(ControlMode.PercentOutput, backHeightWhenReset);
 				amInClimbMode = false;
