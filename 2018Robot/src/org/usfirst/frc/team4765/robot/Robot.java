@@ -43,11 +43,6 @@ public class Robot extends IterativeRobot {
 	public TalonSRX rightSlave = new TalonSRX(2);
 	public TalonSRX leftMaster = new TalonSRX(8);
 	public TalonSRX leftSlave = new TalonSRX(4);
-	//public Compressor compressor = new Compressor(32);
-	//public Solenoid grip = new Solenoid(32, 2);
-	//public Solenoid release = new Solenoid(32, 3);
-	//public Solenoid forwardPush = new Solenoid(32, 0);
-	//public Solenoid backwardPull = new Solenoid(32, 1);
 	public TalonSRX frontElevator = new TalonSRX(1);
 	public TalonSRX backElevator = new TalonSRX(9);
 	public TalonSRX bottomRoller = new TalonSRX(99);
@@ -173,7 +168,7 @@ public class Robot extends IterativeRobot {
 		rightMaster.setSelectedSensorPosition(0, 0, 0);
 		
 		stallingMS = 0;
-		//gripState=0;
+		gripState=0;
 	}
 
 	/**
@@ -563,96 +558,81 @@ public class Robot extends IterativeRobot {
 			}
 			keepElevatorSteady(currentHeight);
 		}
-				
-		//MARK: GRIPPER LOGIC
 		
-		if (stick.getRawButtonPressed(1) || opTable.getRawButtonPressed(12)) {
-			amSupposedToBeGripping = true;
-		}
-		if (stick.getRawButtonPressed(2) || opTable.getRawButtonPressed(11)) {
-			amSupposedToBeGripping = false;
-		}
-				
-		//gripping toggled on
-		if(amSupposedToBeGripping) {
-			gripBlock();
-		} else {
-			releaseBlock();
-		}
-		
-		/*NEW GRIPPER LOGIC
+		//GRIPPER LOGIC
 		//intake if thumb or operator button 12
-		if gripState=0 {
-			System.out.Println("State0");
+		if (gripState==0) {
+			System.out.println("State0");
 			if (stick.getRawButtonPressed(1) || opTable.getRawButtonPressed(12)) {
 			gripState=1;
 		}}
 	
 		//lift if current gets to limit or button
 		 //fix all of this; buttons and volts
-			if gripState=1 {
+			if (gripState==1) {
 				System.out.println("inState1");
-				if (stick.getRawButtonPressed(??) || opTable.getRawButtonPressed(??)) ||	topRoller.getMotorOutputVoltage()>=FIND THIS{
+				if (stick.getRawButtonPressed(??) || opTable.getRawButtonPressed(??) ||	topRoller.getMotorOutputVoltage()>=FIND THIS{
 			gripState=2;
 			}}
 		
 		//if lift to height where box isn't dragging then switch to hold
-		if gripState=2{
+		if (gripState==2){
 		System.out.println ("inState2");
-			{if frontElevator.getSelectedSensorPosition>=10; 
+			{if (frontElevator.getSelectedSensorPosition(0)>=10)
 			//fixme
 				gripState=3;
 			}}
 			
 
 			//trigger to release
-			 if gripState=3 {
+			 if (gripState==3) {
 			 System.out.println ("inState3");
 			 			if (stick.getRawButtonPressed(2) || opTable.getRawButtonPressed(11)) {
 							gripState=4;
 			}}
 			
 			//stop after release
-			 if gripState=4 {
+			 if (gripState==4) {
 			 System.out.println ("inState4");
 			 		if (stick.getRawButtonPressed(2) || opTable.getRawButtonPressed(11)) {
 			 		gripState=0;
 			 		}
 			 		}
 			 		
-			 		if gripState=0 {
+			 		if (gripState==0) {
 			 		System.out.println ("inState0");
 			 			topRoller.set(ControlMode.Current, 0);
 			 			bottomRoller.set(ControlMode.Current, 0);
 			 			}
 			 			
-			 			if gripState=1 {
-			 			gripBlock;
+			 			if (gripState==1) {
+			 			gripBlock();
 			 			}
 			 			
-			 			if gripState=2{
-			 			liftAfterIntake;
+			 			if (gripState==2){
+			 			liftAfterIntake();
 			 			}
 			 			
-			 			if gripState=3 {
-			 			keepblockSteady;
+			 			if (gripState==3) {
+			 			keepBlockSteady();
 			 			}
 			 			
-			 			if gripState=4 {
-			 			releaseBlock;
+			 			if (gripState==4) {
+			 			releaseBlock();
 			 			}
 			 			
 			 //way out of all states if something's wrong
-			if gripState=0 || gripState=1 ||gripState=2 {
+			if (gripState==0 || gripState==1 ||gripState==2) {
 				if (stick.getRawButtonPressed(2) || opTable.getRawButtonPressed(11)) {
 					gripState=4;
 					}}
 			 		
-		*/
-		//MARK: PUSHER LOGIC
+		
+	/*	//MARK: PUSHER LOGIC
 		
 		if (stick.getRawButtonPressed(5) || opTable.getRawButton(10)) {
 			amSupposedToBePushing = true;
+
 		}
 		if (stick.getRawButtonPressed(3) || opTable.getRawButton(10) == false) {
 			amSupposedToBePushing = false;
@@ -664,6 +644,7 @@ public class Robot extends IterativeRobot {
 		} else {
 			pullBlockBackward();
 		}
+		*/
 		
 		//MARK: AUTOPICKUP LOGIC
 		
@@ -750,7 +731,7 @@ public class Robot extends IterativeRobot {
 	}
 	
 	
-	/* public void liftAfterIntake() {
+	 public void liftAfterIntake() {
 		currentHeightIsSet = false;
 		frontElevator.config_kP(0, 1.5, 0);
 		backElevator.config_kP(0, 1.5, 0);
@@ -772,21 +753,13 @@ public class Robot extends IterativeRobot {
 			}
 			frontElevator.set(ControlMode.Position, frontHeight);
 			backElevator.set(ControlMode.Position, backHeight);
-		
+		}
 	}
 	
 	 
-	 */
+	 
 	
-	/*public void pushBlockForward() {
-		//forwardPush.set(true);
-		//backwardPull.set(false);
-	}
 	
-	public void pullBlockBackward() {
-		//backwardPull.set(true);
-		//forwardPush.set(false);
-	}*/
 	
 	public void keepBlockSteady() {
 		//backwardPull.set(false);
