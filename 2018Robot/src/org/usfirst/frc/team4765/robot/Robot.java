@@ -46,7 +46,7 @@ public class Robot extends IterativeRobot {
 	private static final double steadyVoltage=0.25;
 	private static final double releaseVoltage=-0.25;
 	private static final double intakeLiftCurrent=6;
-	private static final double intakeLiftHeight = 2000;
+	private static final double intakeLiftHeight = 2000+6500;
 	private static int counter =100;
 	
 	public Joystick stick = new Joystick(0);
@@ -275,7 +275,22 @@ public class Robot extends IterativeRobot {
 			return false;
 		}
 	}
-	
+	public Boolean finishedDrivingNegativeDistanceInInches(double distance) {
+		currentDistance = leftMaster.getSelectedSensorPosition(0);
+		if(!didSetTargetDistance) {
+			targetDistance = currentDistance + (distance * 76.336);
+			didSetTargetDistance = true;
+		}
+		if(targetDistance - Math.abs(currentDistance) < 0) {
+			driveCalculate(0, 0, 0);
+			leftMaster.setSelectedSensorPosition(0, 0, 0);
+			didSetTargetDistance = false;
+			return true;
+		} else {
+			driveCalculate(-0.2, 0.5, 0);
+			return false;
+		}
+	}
 	public OwnedSide getOwnedSide(GameFeature feature, String gsm) {
 
 		int index = feature.ordinal();
@@ -390,7 +405,7 @@ public class Robot extends IterativeRobot {
 		//if lift to height where box isn't dragging then switch to hold
 		else if (gripState==2){
 			System.out.println ("inState2");
-			currentHeight=2000;
+			currentHeight=8500;
 			currentHeightIsSet=true;
 			gripState=3;
 		}
@@ -481,7 +496,7 @@ public class Robot extends IterativeRobot {
 		backElevator.config_kP(0, 1.5, 0);
 		{
 			double currentHeight = frontElevator.getSelectedSensorPosition(0) + backElevator.getSelectedSensorPosition(0);
-			double newHeight = currentHeight + 728; // TODO: check this position
+			double newHeight = currentHeight + 728; 
 			double frontHeight;
 			double backHeight;
 			if (newHeight > 28500) {
@@ -497,7 +512,7 @@ public class Robot extends IterativeRobot {
 			frontElevator.set(ControlMode.Position, frontHeight);
 			backElevator.set(ControlMode.Position, backHeight);
 			*/
-		currentHeight=2000;
+		currentHeight=8500;
 		currentHeightIsSet=true;
 		}
 	
@@ -520,9 +535,9 @@ public class Robot extends IterativeRobot {
 			double newHeight = currentHeight + 728;
 			double frontHeight;
 			double backHeight;
-			if (newHeight > 28500) {
-				frontHeight = 28500;
-				backHeight = newHeight - 28500;
+			if (newHeight > 28500+1100) {
+				frontHeight = 28500+1100;
+				backHeight = newHeight - (28500+1100);
 				if (backHeight > 25400) {
 					backHeight = 25400;
 				}
@@ -553,9 +568,9 @@ public class Robot extends IterativeRobot {
 			double newHeight = currentHeight - 728;
 			double frontHeight;
 			double backHeight;
-			if (newHeight > 28500) {
-				frontHeight = 28500;
-				backHeight = newHeight - 28500;
+			if (newHeight > 28500+1100) {
+				frontHeight = 28500+1100;
+				backHeight = newHeight - (28500+1100);
 				if (backHeight > 25400) {
 					backHeight = 25400;
 				}
@@ -581,9 +596,9 @@ public class Robot extends IterativeRobot {
 			double newHeight = height;
 			double frontHeight;
 			double backHeight;
-			if (newHeight > 28500) {
-				frontHeight = 28500;
-				backHeight = newHeight - 28500;
+			if (newHeight > 28500+1100) {
+				frontHeight = 28500+1100;
+				backHeight = newHeight - (28500+1100);
 				if (backHeight > 25400) {
 					backHeight = 25400;
 				}
