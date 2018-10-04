@@ -232,7 +232,7 @@ public class Robot extends IterativeRobot {
 		if(autonInitHasRun) {
 			autonInitHasRun = false;
 		}
-		
+		System.out.println(currentDistance);
 		if(autonStep == -1) {
 			if(finishedElevatingFrontDistanceInInchesTo(1)) {
 				autonStep = 0;
@@ -241,8 +241,11 @@ public class Robot extends IterativeRobot {
 		if(opTable.getRawButton(1)) {
 			//STAY
 		} else if(opTable.getRawButton(2)) {
-			//MOVE
+			//MOVE FORWARDS
 			autonCornerMoveOnly();
+		} else if(opTable.getRawButton(3)) {
+			//MOVE BACKWARDS
+			autonCornerReverseOnly();
 		}
 	}
 
@@ -251,6 +254,14 @@ public class Robot extends IterativeRobot {
 		autonInitHasRun = false;
 	}
 
+	public void autonCornerReverseOnly() {
+		if(autonStep == 0) {
+			if(finishedDrivingNegativeDistanceInInches(95)) {
+				autonStep = 1;
+			}	
+		}
+	}
+	
 	public void autonCornerMoveOnly() {
 		if(autonStep == 0) {
 			if(finishedDrivingDistanceInInches(95)) {
@@ -287,7 +298,7 @@ public class Robot extends IterativeRobot {
 			didSetTargetDistance = false;
 			return true;
 		} else {
-			driveCalculate(-0.2, 0.5, 0);
+			driveCalculate(0.2, -0.5, 0);
 			return false;
 		}
 	}
