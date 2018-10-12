@@ -42,9 +42,9 @@ public class Robot extends IterativeRobot {
 	public TalonSRX bottomRoller = new TalonSRX(2);
 	public TalonSRX topRoller = new TalonSRX(4);
 	
-	private static final double gripVoltage=0.5;
-	private static final double steadyVoltage=0.25;
-	private static final double releaseVoltage=-0.25;
+	private static final double gripVoltage=0.75;
+	private static final double steadyVoltage=0.5;
+	private static final double releaseVoltage=-0.75;
 	private static final double intakeLiftCurrent=6;
 	private static final double intakeLiftHeight = 2000+6500;
 	private static int counter =100;
@@ -407,7 +407,7 @@ public class Robot extends IterativeRobot {
 		//fix all of this; buttons and volts
 		else if (gripState==1) {
 			System.out.println("inState1");
-			if (stick.getRawButtonPressed(LIFT_INTAKE_JOYSTICK) || opTable.getRawButtonPressed(LIFT_INTAKE_OPERATOR) ||	topRoller.getOutputCurrent()>=intakeLiftCurrent){
+			if (stick.getRawButtonPressed(LIFT_INTAKE_JOYSTICK) || opTable.getRawButtonPressed(LIFT_INTAKE_OPERATOR)/* ||	topRoller.getOutputCurrent()>=intakeLiftCurrent*/){
 				gripState=2;
 			} else {
 				gripBlock();
